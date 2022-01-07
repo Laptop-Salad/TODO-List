@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+		<link rel="shortcut icon" href="#">
+    <title>TODO List</title>
+</head>
+
+<body>
+  <h1>TODO List</h1>
+  <button id="login-btn">Connect Your Wallet</button>
+  <button id="createList" onclick="loadTasks()">Load My TODO List</button>
+  <input id="taskInput" type="text" placeholder="Example: Update resume">
+  <button id="newTask">Add a new item</button>
+  <div id="container">
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" crossorigin="anonymous"></script>
+  <script src="script.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      document.getElementById('createList').style.visibility = 'hidden'; // Hide the loadTasks button
+      document.getElementById('taskInput').style.visibility = 'hidden'; // Hide taskInput
+      document.getElementById('newTask').style.visibility = 'hidden'; // Hide newTask button
+
+      document.getElementById('createList').disabled = true; // Disable the loadTasks button
+      document.getElementById('taskInput').disabled = true; // Disable taskInput
+      document.getElementById('newTask').disabled = true; // Disable newTask button
+
+      var numOfTasks; // Variable to save number of tasks
+      var tasks; // Variable to save tasks
+      var address = "0xf13D96924C89019FAa3796516220Ad769C9A5984"; // Address of smart contract
+      var abi = [ // ABI of smart contract
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_task",
+				"type": "string"
+			}
+		],
+		"name": "createTasks",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "createUser",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "taskId",
+				"type": "uint256"
+			}
+		],
+		"name": "removeTasks",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "addressToUser",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "numCompleted",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "numTasks",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "hasCreated",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAmountOfComplete",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAmountOfTasks",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getTasks",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "hasCreated",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+            
+      web3 = new Web3(web3.currentProvider);
+      contract = new web3.eth.Contract(abi, address);
+
+      /* User Clicks LOGIN Button */
+      $('#login-btn').click(function() {
+        // Get account
+        web3.eth.getAccounts().then(function(accounts) {
+
+          // Check if user already exists
+          contract.methods.hasCreated().call({
+            from: accounts[0]
+          }).then(function(hasCreated) {
+            // If user has already been created then take them to the main window
+            if (hasCreated == true) {
+              window.alert("Welcome back!");
+              document.getElementById('createList').style.visibility = 'visible'; // Show loadTasks button
+              document.getElementById('taskInput').style.visibility = 'visible'; // Show taskinput 
+              document.getElementById('newTask').style.visibility = 'visible'; // Show newTask button
+
+              document.getElementById('createList').disabled = false; // Able the loadTasks button
+              document.getElementById('taskInput').disabled = false; // Able taskInput
+              document.getElementById('newTask').disabled = false; // Able newTask button
+            
+            // Otherwise create a new user
+            } else { 
+              web3.eth.getAccounts().then(function(accounts) {
+                window.alert("This may take a few minutes...");
+                window.ethereum.enable()
+                return contract.methods.createUser().send({
+                  from: accounts[0]
+                });
+              
+                // If account creation was successful
+              }).then(function(tx) {
+                window.alert("Account creation successful...");
+                document.getElementById('createList').style.visibility = 'visible'; // Show loadTasks button
+                document.getElementById('taskInput').style.visibility = 'visible'; // Show taskinput 
+                document.getElementById('newTask').style.visibility = 'visible'; // Show newTask button
+
+                // If there was an error with account creation
+              }).catch(function(tx) { 
+                console.log(tx);
+                window.alert("Account creation unsuccessful... Try downloading metamask?");
+              })
+
+            }
+
+          })
+        })
+      })
+    })
+  </script>
+</body>
+
+</html>
